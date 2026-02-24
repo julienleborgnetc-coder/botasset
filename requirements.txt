@@ -1,0 +1,4 @@
+replicate
+Pillow
+requests
+python-dotenv

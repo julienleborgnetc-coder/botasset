@@ -5,6 +5,38 @@
 - Configuration principale: `.devcontainer/asset-creator/devcontainer.json`
 - Workflow de création de Codespace: `.github/workflows/create-codespace.yml`
 
+## Générateur d'assets premium (Codespace)
+
+### 1) Préparer les dépendances
+
+Dans le Codespace:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+### 2) Configurer le token API
+
+```bash
+cp .env.example .env
+```
+
+Puis remplacez la valeur de `REPLICATE_API_TOKEN` dans `.env`.
+
+### 3) Générer des images
+
+Script principal: `generate_asset.py`
+
+Exemples:
+
+```bash
+python3 generate_asset.py --prompt "un chevalier fantasy en armure dorée, style cartoon, fond transparent" --output chevalier
+python3 generate_asset.py --prompt "icône de potion de mana, style pixel art 16-bit" --num 4 --output potion
+python3 generate_asset.py --prompt "décors de forêt enchantée, vue de dessus pour jeu mobile" --width 1536 --height 1536 --mobile 1024 1024 --output foret
+```
+
+Les PNG sont enregistrés dans `assets/` (ou dans le dossier défini avec `--output-dir`).
+
 ## Déclenchement du Codespace
 
 Ajoutez un commentaire d'issue contenant:

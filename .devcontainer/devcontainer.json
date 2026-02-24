@@ -6,7 +6,7 @@
     "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
   // Installation des logiciels
-  "postCreateCommand": "sudo apt update && sudo apt install -y blender gimp imagemagick && pip install pillow numpy",
+  "postCreateCommand": "sudo apt update && sudo apt install -y blender gimp imagemagick python3-pip && pip3 install -r requirements.txt",
   // Extension VS Code utiles
   "customizations": {
     "vscode": {
