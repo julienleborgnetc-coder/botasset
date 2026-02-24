@@ -11,6 +11,20 @@ def _positive_int(value: str) -> int:
     return parsed
 
 
+def _aspect_ratio_from_size(width: int, height: int) -> str:
+    ratio = width / height
+    known_ratios = {
+        "1:1": 1.0,
+        "16:9": 16 / 9,
+        "9:16": 9 / 16,
+        "4:3": 4 / 3,
+        "3:4": 3 / 4,
+        "3:2": 3 / 2,
+        "2:3": 2 / 3,
+    }
+    return min(known_ratios, key=lambda key: abs(known_ratios[key] - ratio))
+
+
 class AssetGenerator:
     def __init__(self) -> None:
         try:
@@ -37,6 +51,7 @@ class AssetGenerator:
     def generate(
         self,
         prompt: str,
+        engine: str = "fluxGen",
         negative: str = "",
         width: int = 1024,
         height: int = 1024,
@@ -50,22 +65,35 @@ class AssetGenerator:
                 "Dépendance manquante: installez les paquets avec `pip3 install -r requirements.txt`."
             ) from exc
 
-        output = self.client.run(
-            "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-            input={
-                "prompt": prompt,
-                "negative_prompt": negative,
-                "width": width,
-                "height": height,
-                "num_outputs": num,
-                "scheduler": "DPMSolverMultistep",
-                "num_inference_steps": 25,
-                "guidance_scale": 7.5,
-            },
-        )
+        if engine == "fluxGen":
+            output = self.client.run(
+                "black-forest-labs/flux-schnell",
+                input={
+                    "prompt": prompt,
+                    "num_outputs": num,
+                    "aspect_ratio": _aspect_ratio_from_size(width, height),
+                    "output_format": "png",
+                    "output_quality": 100,
+                },
+            )
+        else:
+            output = self.client.run(
+                "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+                input={
+                    "prompt": prompt,
+                    "negative_prompt": negative,
+                    "width": width,
+                    "height": height,
+                    "num_outputs": num,
+                    "scheduler": "DPMSolverMultistep",
+                    "num_inference_steps": 25,
+                    "guidance_scale": 7.5,
+                },
+            )
 
         images: list = []
-        for image_url in output:
+        output_urls = output if isinstance(output, list) else [output]
+        for image_url in output_urls:
             response = requests.get(image_url, timeout=60)
             response.raise_for_status()
             image = Image.open(BytesIO(response.content)).convert("RGBA")
@@ -100,6 +128,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Générateur d'assets premium pour jeux mobiles")
     parser.add_argument("--prompt", required=True, help="Description de l'asset souhaité")
     parser.add_argument(
+        "--engine",
+        choices=["fluxGen", "sdxl"],
+        default="fluxGen",
+        help="Moteur de génération (fluxGen recommandé)",
+    )
+    parser.add_argument(
         "--negative",
         default="low quality, blurry, ugly, deformed",
         help="Prompt négatif",
@@ -130,8 +164,11 @@ def main() -> int:
 
     generator = AssetGenerator()
     print(f"Génération de {args.num} image(s) avec le prompt : {args.prompt}")
+    if args.engine == "fluxGen" and args.negative:
+        print("Note: --negative est ignoré avec fluxGen.")
     images = generator.generate(
         prompt=args.prompt,
+        engine=args.engine,
         negative=args.negative,
         width=args.width,
         height=args.height,
