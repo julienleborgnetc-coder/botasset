@@ -1,0 +1,27 @@
+{
+  "name": "Asset Creation Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu", // ou une image avec GPU si nécessaire
+  "features": {
+    // Interface graphique légère (VNC)
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  // Installation des logiciels
+  "postCreateCommand": "sudo apt update && sudo apt install -y blender gimp imagemagick && pip install pillow numpy",
+  // Extension VS Code utiles
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  },
+  // Pour accéder à l'interface graphique
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "Desktop",
+      "onAutoForward": "openPreview"
+    }
+  }
+}
